@@ -36,12 +36,15 @@ public class CubeInteraction : MonoBehaviour
 
         if (Physics.Raycast(ray, out RaycastHit hit, _raycastDistance))
         {
-            if (hit.transform.TryGetComponent(out ICube _))
+            if (hit.transform.TryGetComponent(out ICube cube))
             {
-                _selectedCube = hit.collider.gameObject;
-                _selectedCube.GetComponent<Rigidbody>().isKinematic = true;
-                _selectedCube.transform.SetParent(transform);
-                _isHoldingCube = true;
+                if (!cube.IsStatic)
+                {
+                    _selectedCube = hit.collider.gameObject;
+                    _selectedCube.GetComponent<Rigidbody>().isKinematic = true;
+                    _selectedCube.transform.SetParent(transform);
+                    _isHoldingCube = true;
+                }
             }
         }
     }

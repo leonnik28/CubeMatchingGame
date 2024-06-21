@@ -1,6 +1,4 @@
 using Cinemachine;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -72,10 +70,16 @@ public class Player : MonoBehaviour
         Vector3 currentRotation = transform.localEulerAngles;
         float newRotationX = currentRotation.x + verticalRotation;
 
-        if (newRotationX > 180) newRotationX -= 360;
-        if (newRotationX < -180) newRotationX += 360;
+        if (newRotationX > 180)
+        {
+            newRotationX -= 360;
+        }
+        if (newRotationX < -180)
+        {
+            newRotationX += 360;
+        }
 
-        newRotationX = Mathf.Clamp(newRotationX, -5f, 20f);
+        newRotationX = Mathf.Clamp(newRotationX, -2f, 30f);
 
         transform.localEulerAngles = new Vector3(newRotationX, currentRotation.y, currentRotation.z);
 
