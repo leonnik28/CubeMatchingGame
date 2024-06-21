@@ -1,9 +1,12 @@
 using Cinemachine;
+using Mirror;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class Player : MonoBehaviour
+public class Player : NetworkBehaviour
 {
+    [SyncVar] private Vector3 _syncPosition;
+
     [SerializeField] private CharacterController _characterController;
     [SerializeField] private CinemachineVirtualCamera _virtualCamera;
 
@@ -33,6 +36,10 @@ public class Player : MonoBehaviour
 
     private void Update()
     {
+        if (!isLocalPlayer || !NetworkClient.isConnected)
+        {
+            return;
+        }
         HandleMovement();
         HandleCameraRotation();
 
@@ -57,6 +64,8 @@ public class Player : MonoBehaviour
         Vector3 position = transform.position;
         position.y = _initialYPosition;
         transform.position = position;
+
+        CmdUpdatePosition(position);
     }
 
     private void HandleCameraRotation()
@@ -90,6 +99,22 @@ public class Player : MonoBehaviour
             {
                 composer.m_TrackedObjectOffset = new Vector3(composer.m_TrackedObjectOffset.x, 0, composer.m_TrackedObjectOffset.z);
             }
+        }
+    }
+
+    [Command]
+    private void CmdUpdatePosition(Vector3 position)
+    {
+        _syncPosition = position;
+        RpcUpdatePosition(position);
+    }
+
+    [ClientRpc]
+    private void RpcUpdatePosition(Vector3 position)
+    {
+        if (!isLocalPlayer)
+        {
+            transform.position = Vector3.Lerp(transform.position, position, Time.deltaTime * _moveSpeed);
         }
     }
 }

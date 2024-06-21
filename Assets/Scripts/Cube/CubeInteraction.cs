@@ -1,6 +1,7 @@
+using Mirror;
 using UnityEngine;
 
-public class CubeInteraction : MonoBehaviour
+public class CubeInteraction : NetworkBehaviour
 {
     [SerializeField] private float _raycastDistance = 5f;
 
@@ -9,25 +10,20 @@ public class CubeInteraction : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetMouseButtonDown(1))
+        if (isLocalPlayer)
         {
-            if (_isHoldingCube)
+            if (Input.GetMouseButtonDown(1))
             {
-                ReleaseCube();
-            }
-            else
-            {
-                PickUpCube();
+                if (_isHoldingCube)
+                {
+                    CmdReleaseCube();
+                }
+                else
+                {
+                    PickUpCube();
+                }
             }
         }
-    }
-
-    private void ReleaseCube()
-    {
-        _selectedCube.GetComponent<Rigidbody>().isKinematic = false;
-        _selectedCube.transform.SetParent(null);
-        _selectedCube = null;
-        _isHoldingCube = false;
     }
 
     private void PickUpCube()
@@ -41,11 +37,34 @@ public class CubeInteraction : MonoBehaviour
                 if (!cube.IsStatic)
                 {
                     _selectedCube = hit.collider.gameObject;
-                    _selectedCube.GetComponent<Rigidbody>().isKinematic = true;
-                    _selectedCube.transform.SetParent(transform);
-                    _isHoldingCube = true;
+                    CmdPickUpCube(_selectedCube.GetComponent<NetworkIdentity>().netId);
                 }
             }
         }
+    }
+
+    [Command]
+    private void CmdPickUpCube(uint cubeNetId)
+    {
+        if (!NetworkServer.spawned.ContainsKey(cubeNetId))
+        {
+            Debug.LogError("Cube with id " + cubeNetId + " not found");
+            return;
+        }
+
+        GameObject cube = NetworkServer.spawned[cubeNetId].gameObject;
+        cube.GetComponent<Rigidbody>().isKinematic = true;
+        cube.transform.SetParent(transform);
+        _isHoldingCube = true;
+    }
+
+
+    [Command]
+    private void CmdReleaseCube()
+    {
+        _selectedCube.GetComponent<Rigidbody>().isKinematic = false;
+        _selectedCube.transform.SetParent(null);
+        _selectedCube = null;
+        _isHoldingCube = false;
     }
 }
